@@ -1,0 +1,63 @@
+`timescale 1ns / 1ps
+
+//////////////////////////////////////////////////////////////////////////////////
+// FPGA par chalana hai to testbench ki zarurat nahi hoti. FPGA ke liye top module hona chahiye jo board ke clock aur reset se connect ho.
+// Saath hi state machine ko slow karne ke liye clock divider bhi chahiye.
+
+`timescale 1ns / 1ps
+
+module Traffic_Light_Controller_TOP(
+
+    input clk,          // 100 MHz onboard clock
+    input rst,          // Push button reset
+
+    output [2:0] light_M1,
+    output [2:0] light_S,
+    output [2:0] light_MT,
+    output [2:0] light_M2
+
+);
+
+reg clk_1Hz;
+reg [26:0] div_count;
+
+//--------------------------------------------------
+// 100 MHz -> 1 Hz Clock Divider
+//--------------------------------------------------
+
+always @(posedge clk or posedge rst)
+begin
+    if(rst)
+    begin
+        div_count <= 0;
+        clk_1Hz <= 0;
+    end
+    else
+    begin
+        if(div_count == 49_999_999)
+        begin
+            div_count <= 0;
+            clk_1Hz <= ~clk_1Hz;
+        end
+        else
+            div_count <= div_count + 1;
+    end
+end
+
+//--------------------------------------------------
+// Traffic Light Controller
+//--------------------------------------------------
+
+Traffic_Light_Controller U1(
+
+    .clk(clk_1Hz),
+    .rst(rst),
+
+    .light_M1(light_M1),
+    .light_S(light_S),
+    .light_MT(light_MT),
+    .light_M2(light_M2)
+
+);
+
+endmodule
